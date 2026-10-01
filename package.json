@@ -1,0 +1,8 @@
+{
+  "name": "is-it-trending",
+  "version": "1.0.0",
+  "description": "Type any topic. Instantly see if the world is searching for it.",
+  "dependencies": {
+    "google-trends-api": "^4.9.2"
+  }
+}

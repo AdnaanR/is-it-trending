@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Is It Trending? — Instantly see what the world is searching for</title>
+  <meta name="description" content="Type any topic and instantly see if the world is searching for it right now. Free trend checker for marketers, creators, and curious minds.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #f7f8fa;
+      color: #1a1a1a;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 3rem 1rem 2rem;
+    }
+
+    /* ---- Header ---- */
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      text-align: center;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.625rem;
+    }
+    .tagline {
+      text-align: center;
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ---- Search ---- */
+    .search {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .search input {
+      flex: 1;
+      padding: 0.85rem 1rem;
+      font-size: 1rem;
+      border: 2px solid #dfe1e5;
+      border-radius: 12px;
+      outline: none;
+      background: #fff;
+      transition: border-color 0.15s;
+    }
+    .search input:focus { border-color: #4285f4; }
+    .search button {
+      padding: 0.85rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 700;
+      background: #4285f4;
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .search button:hover { background: #3367d6; }
+    .search button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ---- Chips ---- */
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+    .chip {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 20px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem;
+      color: #444;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .chip:hover { background: #4285f4; color: #fff; border-color: #4285f4; }
+
+    /* ---- Results ---- */
+    #results { min-height: 40px; }
+
+    .summary-card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .summary-card .direction {
+      font-size: 1.6rem;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+    .summary-card .detail {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .dir-up   { color: #0d904f; }
+    .dir-down { color: #d93025; }
+    .dir-stable { color: #5f6368; }
+
+    .card {
+      background: #fff;
+      border-radius: 14px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      margin-bottom: 1rem;
+    }
+    .card h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 0.15rem;
+    }
+    .card .subtitle {
+      font-size: 0.78rem;
+      color: #999;
+      margin-bottom: 0.75rem;
+    }
+    .card-header-row {
+      display: flex;
+      align-items: center;
+      padding: 0 0 0.4rem;
+      border-bottom: 1px solid #f0f0f0;
+      margin-bottom: 0.25rem;
+    }
+    .card-header-row span {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .col-rank  { width: 1.75rem; }
+    .col-query { flex: 1; }
+    .col-bar   { width: 110px; margin: 0 0.5rem; }
+    .col-change{ min-width: 72px; text-align: right; }
+
+    .row {
+      display: flex;
+      align-items: center;
+      padding: 0.55rem 0;
+      border-bottom: 1px solid #f7f7f7;
+    }
+    .row:last-child { border-bottom: none; }
+
+    .rank {
+      width: 1.75rem;
+      font-weight: 600;
+      color: #bbb;
+      font-size: 0.82rem;
+    }
+    .qname {
+      flex: 1;
+      font-size: 0.92rem;
+    }
+    .bar-wrap {
+      width: 110px;
+      height: 7px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      margin: 0 0.5rem;
+      overflow: hidden;
+    }
+    .bar-fill {
+      height: 100%;
+      background: #4285f4;
+      border-radius: 4px;
+      transition: width 0.4s ease;
+    }
+    .change {
+      min-width: 72px;
+      text-align: right;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+    .change-up { color: #0d904f; }
+    .change-breakout {
+      display: inline-block;
+      background: #e8f0fe;
+      color: #4285f4;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.03em;
+    }
+    .change-pct { color: #0d904f; }
+
+    .no-data {
+      color: #999;
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 1rem 0;
+    }
+
+    /* ---- Google link ---- */
+    .gtrends-link {
+      display: block;
+      text-align: center;
+      margin-bottom: 1rem;
+      font-size: 0.82rem;
+      color: #4285f4;
+      text-decoration: none;
+    }
+    .gtrends-link:hover { text-decoration: underline; }
+
+    /* ---- Loading / Error ---- */
+    .loading {
+      text-align: center;
+      padding: 2.5rem 0;
+      color: #999;
+      font-size: 0.9rem;
+    }
+    .spinner {
+      width: 28px; height: 28px;
+      border: 3px solid #eee;
+      border-top-color: #4285f4;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 0.75rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-box {
+      text-align: center;
+      padding: 1.5rem;
+      background: #fce8e6;
+      color: #d93025;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ---- Ad slot ---- */
+    .ad-slot {
+      text-align: center;
+      margin: 1.5rem 0;
+      min-height: 10px;
+      /* Adsterra / Monetag code goes here */
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      text-align: center;
+      padding: 1.5rem 1rem 2rem;
+      color: #aaa;
+      font-size: 0.75rem;
+      line-height: 1.6;
+    }
+    footer a { color: #999; }
+
+    /* ---- Mobile ---- */
+    @media (max-width: 480px) {
+      .wrap { padding: 2rem 0.75rem 1.5rem; }
+      h1 { font-size: 1.6rem; }
+      .tagline { font-size: 0.88rem; }
+      .col-bar, .bar-wrap { width: 70px; }
+      .col-change, .change { min-width: 60px; }
+      .search button { padding: 0.85rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <h1>📈 Is It Trending?</h1>
+  <p class="tagline">
+    A free tool for marketers, content creators, and curious minds&nbsp;&mdash; type any topic and instantly see what the world is searching for right now.
+  </p>
+
+  <form class="search" id="searchForm" autocomplete="off">
+    <input type="text" id="q" placeholder='Type a topic, e.g. "AI" or "World Cup"' autofocus>
+    <button type="submit" id="btn">Check</button>
+  </form>
+
+  <div class="chips" id="chips">
+    <span class="chip">artificial intelligence</span>
+    <span class="chip">crypto</span>
+    <span class="chip">Taylor Swift</span>
+    <span class="chip">recipe</span>
+    <span class="chip">workout</span>
+    <span class="chip">iPhone</span>
+  </div>
+
+  <div id="results"></div>
+
+  <!-- Ad slot #1: paste your Adsterra / Monetag banner code inside this div -->
+  <div class="ad-slot" id="ad-top"></div>
+
+</div>
+
+<!-- Ad slot #2: bottom banner -->
+<div class="ad-slot" id="ad-bottom" style="max-width:600px;margin:0 auto;padding:0 1rem;"></div>
+
+<footer>
+  Data sourced from Google Trends. Not affiliated with Google.<br>
+  &copy; 2026 Is It Trending? &mdash; Built with <a href="https://www.netlify.com" target="_blank" rel="noopener">Netlify</a>
+</footer>
+
+<script>
+(function () {
+  const form  = document.getElementById('searchForm');
+  const input = document.getElementById('q');
+  const btn   = document.getElementById('btn');
+  const box   = document.getElementById('results');
+  const chips = document.getElementById('chips');
+
+  /* ---- Chip clicks ---- */
+  chips.addEventListener('click', function (e) {
+    if (e.target.classList.contains('chip')) {
+      input.value = e.target.textContent;
+      doSearch(e.target.textContent);
+    }
+  });
+
+  /* ---- Form submit ---- */
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    const kw = input.value.trim();
+    if (kw) doSearch(kw);
+  });
+
+  /* ---- Main search ---- */
+  async function doSearch(keyword) {
+    btn.disabled = true;
+    box.innerHTML =
+      '<div class="loading"><div class="spinner"></div>Checking trends for <strong>' +
+      esc(keyword) + '</strong>&hellip;</div>';
+
+    try {
+      const res = await fetch('/api/trends?q=' + encodeURIComponent(keyword));
+      if (!res.ok) throw new Error('Server returned ' + res.status);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      render(data);
+    } catch (err) {
+      box.innerHTML =
+        '<div class="error-box">' + esc(err.message) + '</div>' +
+        '<a class="gtrends-link" href="https://trends.google.com/trends/explore?q=' +
+        encodeURIComponent(keyword) + '" target="_blank" rel="noopener">View on Google Trends instead &rarr;</a>';
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ---- Render results ---- */
+  function render(data) {
+    var html = '';
+
+    /* Summary */
+    var arrow = data.direction === 'up' ? '↑ Trending Up' :
+                data.direction === 'down' ? '↓ Trending Down' : '→ Holding Steady';
+    var cls   = 'dir-' + data.direction;
+    html += '<div class="summary-card">';
+    html += '<div class="direction ' + cls + '">' + arrow + '</div>';
+    html += '<div class="detail">Search interest for <strong>' + esc(data.keyword) +
+            '</strong> is at <strong>' + data.currentInterest + '</strong> out of 100 right now.</div>';
+    html += '</div>';
+
+    /* Top queries */
+    html += buildTable('Top queries', 'Worldwide &middot; Past 12 months', data.topQueries, false);
+
+    /* Rising queries */
+    html += buildTable('Rising queries', 'Worldwide &middot; Past 12 months', data.risingQueries, true);
+
+    /* Google Trends link */
+    html += '<a class="gtrends-link" href="https://trends.google.com/trends/explore?q=' +
+            encodeURIComponent(data.keyword) + '" target="_blank" rel="noopener">See full details on Google Trends &rarr;</a>';
+
+    box.innerHTML = html;
+  }
+
+  function buildTable(title, sub, queries, isRising) {
+    if (!queries || queries.length === 0) {
+      return '<div class="card"><h2>' + title + '</h2><p class="no-data">No data available for this topic.</p></div>';
+    }
+
+    var maxVal = queries.reduce(function (m, q) { return Math.max(m, q.value); }, 1);
+
+    var h = '<div class="card">';
+    h += '<h2>' + title + '</h2>';
+    h += '<div class="subtitle">' + sub + '</div>';
+
+    /* Header row */
+    h += '<div class="card-header-row">';
+    h += '<span class="col-rank">#</span>';
+    h += '<span class="col-query">Query</span>';
+    h += '<span class="col-bar">Search Interest</span>';
+    h += '<span class="col-change">Change</span>';
+    h += '</div>';
+
+    queries.forEach(function (q, i) {
+      var pct = Math.round((q.value / maxVal) * 100);
+      var changeHtml;
+
+      if (isRising) {
+        /* Rising: value > 5000 means Breakout, otherwise show +N% */
+        if (q.value >= 5000 || (q.formatted && q.formatted.toUpperCase().indexOf('BREAKOUT') !== -1)) {
+          changeHtml = '<span class="change-breakout">BREAKOUT</span>';
+        } else {
+          changeHtml = '<span class="change-pct">+' + numberWithCommas(q.value) + '%</span>';
+        }
+      } else {
+        /* Top: show the raw score */
+        changeHtml = '<span style="color:#555">' + q.formatted + '</span>';
+      }
+
+      h += '<div class="row">';
+      h += '<span class="rank">' + (i + 1) + '</span>';
+      h += '<span class="qname">' + esc(q.query) + '</span>';
+      h += '<span class="bar-wrap"><span class="bar-fill" style="width:' + pct + '%"></span></span>';
+      h += '<span class="change">' + changeHtml + '</span>';
+      h += '</div>';
+    });
+
+    h += '</div>';
+    return h;
+  }
+
+  /* ---- Helpers ---- */
+  function esc(s) {
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+  function numberWithCommas(n) {
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+})();
+</script>
+
+</body>
+</html>
